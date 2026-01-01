@@ -1,466 +1,784 @@
-# PostgreSQL Admin MCP Server - Complete Edition
+# PostgreSQL MCP Server
 
-Complete PostgreSQL administration toolkit with comprehensive admin capabilities for database management, user management, maintenance operations, and more.
+A powerful Model Context Protocol (MCP) server for comprehensive PostgreSQL database administration and management. This server provides AI assistants like Claude with secure, controlled access to PostgreSQL databases through a rich set of administrative tools.
 
-## 🔒 Safety Features
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-blue.svg)](https://www.postgresql.org/)
+[![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/)
 
-### ENABLE_DANGEROUS Flag
-All write operations (CREATE, ALTER, DROP, INSERT, UPDATE, DELETE, GRANT, REVOKE, etc.) are protected by the `ENABLE_DANGEROUS` environment variable:
+## 🎯 Overview
 
-```bash
-# In your .env file
-ENABLE_DANGEROUS=true  # Enable admin write operations
-ENABLE_DANGEROUS=false # Disable admin write operations (read-only)
+The PostgreSQL MCP Server enables AI assistants to perform database administration tasks through a secure, well-defined interface. It provides over 60 specialized tools for database management, from basic queries to advanced administration tasks like user management, performance monitoring, and schema operations.
+
+### Key Features
+
+- 🔒 **Secure Access Control** - Configurable permissions with dangerous operations protection
+- 📊 **Comprehensive Monitoring** - Real-time database statistics, performance metrics, and health checks
+- 🛠️ **Complete Admin Toolkit** - Schema management, user/role administration, index optimization
+- 🔍 **Query Tools** - Safe query execution, EXPLAIN plans, and data export capabilities
+- 💾 **Data Management** - Insert, update, delete operations with built-in safety checks
+- 📈 **Performance Analysis** - Bloat detection, cache hit ratios, slow query identification
+- 🔄 **Maintenance Tools** - VACUUM, ANALYZE, REINDEX operations
+- 🌐 **Multi-Database Support** - Manage multiple databases and schemas
+
+## 🏗️ Architecture
+
+```mermaid
+graph TB
+    subgraph "AI Assistant"
+        Claude[Claude AI]
+    end
+    
+    subgraph "MCP Layer"
+        MCP[MCP Server]
+        Tools[60+ Admin Tools]
+    end
+    
+    subgraph "PostgreSQL Server"
+        PG[(PostgreSQL Database)]
+        Schema1[DVD Rental Schema]
+        Schema2[Movies Schema]
+        Schema3[Custom Schemas]
+    end
+    
+    Claude -->|MCP Protocol| MCP
+    MCP -->|Tool Calls| Tools
+    Tools -->|SQL/Admin Commands| PG
+    PG --> Schema1
+    PG --> Schema2
+    PG --> Schema3
+    
+    style Claude fill:#9f6
+    style MCP fill:#69f
+    style PG fill:#f96
 ```
 
-**Default**: `false` (read-only mode for safety)
+## 📋 Table of Contents
 
-### Error Handling
-- All tools include comprehensive error handling
-- SQL syntax errors are caught and returned with details
-- Invalid operations are blocked with clear error messages
-- Connection errors are handled gracefully
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Features & Tools](#features--tools)
+- [Database Schemas](#database-schemas)
+- [Usage Examples](#usage-examples)
+- [Security](#security)
+- [API Reference](#api-reference)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
-## 📋 Complete Tool Reference
+## 🚀 Installation
 
-### 🗄️ Database Management
+### Prerequisites
 
-#### Read Operations (Always Available)
-- **pg_list_databases()** - List all databases with sizes and connections
-- **pg_database_stats(database)** - Detailed stats for a database
-- **pg_database_activity_summary()** - Overall database activity summary
+- Python 3.8 or higher
+- PostgreSQL 12 or higher
+- pip (Python package manager)
 
-#### Write Operations (Requires ENABLE_DANGEROUS=true)
-- **pg_create_database(database, owner?, encoding?)** - Create new database
-  ```python
-  # Example: Create database with UTF8 encoding
-  pg_create_database("myapp_prod", owner="app_user", encoding="UTF8")
-  ```
+### Step 1: Clone the Repository
 
-- **pg_drop_database(database, force?)** - Drop database
-  ```python
-  # Example: Force drop (terminates connections first)
-  pg_drop_database("old_database", force=True)
-  ```
-
-### 📁 Schema Management
-
-#### Read Operations
-- **pg_list_schemas()** - List all non-system schemas
-
-#### Write Operations (Requires ENABLE_DANGEROUS=true)
-- **pg_create_schema(schema, authorization?)** - Create schema
-- **pg_drop_schema(schema, cascade?)** - Drop schema and optionally all contents
-
-### 📊 Table Operations
-
-#### Read Operations
-- **pg_list_tables(schema)** - List tables in schema
-- **pg_describe_table(schema, table)** - Column details
-- **pg_table_size(schema, table?)** - Size information
-- **pg_table_stats(schema, table)** - Detailed statistics
-- **pg_bloat_check(schema)** - Check for table bloat
-- **pg_table_constraints(schema, table)** - List all constraints
-- **pg_foreign_keys(schema)** - List foreign key relationships
-
-#### Write Operations (Requires ENABLE_DANGEROUS=true)
-- **pg_create_table(schema, table, columns)** - Create table
-  ```python
-  # Example: Create users table
-  pg_create_table(
-      schema="public",
-      table="users",
-      columns="id SERIAL PRIMARY KEY, email VARCHAR(255) UNIQUE NOT NULL, created_at TIMESTAMP DEFAULT NOW()"
-  )
-  ```
-
-- **pg_alter_table(schema, table, alteration)** - Alter table
-  ```python
-  # Examples of alterations:
-  pg_alter_table("public", "users", "ADD COLUMN phone VARCHAR(20)")
-  pg_alter_table("public", "users", "DROP COLUMN old_field")
-  pg_alter_table("public", "users", "RENAME COLUMN name TO full_name")
-  pg_alter_table("public", "users", "ALTER COLUMN id TYPE BIGINT")
-  ```
-
-- **pg_drop_table(schema, table, cascade?)** - Drop table
-- **pg_truncate_table(schema, table, cascade?, restart_identity?)** - Remove all rows
-
-### 🔍 Index Management
-
-#### Read Operations
-- **pg_list_indexes(schema, table?)** - List indexes
-- **pg_index_usage(schema)** - Index usage statistics
-- **pg_unused_indexes(schema)** - Find unused indexes (0 scans)
-
-#### Write Operations (Requires ENABLE_DANGEROUS=true)
-- **pg_create_index(schema, table, index_name, columns, unique?, method?)** - Create index
-  ```python
-  # Examples:
-  pg_create_index("public", "users", "idx_users_email", "email", unique=True)
-  pg_create_index("public", "users", "idx_users_name_lower", "lower(name)")
-  pg_create_index("public", "logs", "idx_logs_created", "created_at DESC", method="btree")
-  ```
-
-- **pg_drop_index(schema, index_name, cascade?)** - Drop index
-- **pg_reindex(schema, table?, index?)** - Rebuild indexes
-
-### 👥 User & Permission Management
-
-#### Read Operations
-- **pg_list_users()** - List all users/roles
-- **pg_user_permissions(username)** - Show user's permissions
-- **pg_table_permissions(schema, table)** - Show table permissions
-
-#### Write Operations (Requires ENABLE_DANGEROUS=true)
-- **pg_create_user(username, password, superuser?, createdb?, createrole?, login?)** - Create user
-  ```python
-  # Example: Create app user with database creation privilege
-  pg_create_user(
-      username="app_user",
-      password="secure_password_here",
-      createdb=True,
-      login=True
-  )
-  ```
-
-- **pg_alter_user(username, password?, superuser?, createdb?, createrole?, login?)** - Modify user
-- **pg_drop_user(username)** - Drop user
-- **pg_grant_privileges(username, privileges, schema, table?)** - Grant permissions
-  ```python
-  # Examples:
-  pg_grant_privileges("app_user", "SELECT, INSERT, UPDATE", "public", "users")
-  pg_grant_privileges("app_user", "ALL PRIVILEGES", "public")  # All tables in schema
-  ```
-
-- **pg_revoke_privileges(username, privileges, schema, table?)** - Revoke permissions
-
-### 📈 Performance & Monitoring
-
-#### Query Monitoring
-- **pg_active_queries(include_idle?)** - Show running queries
-- **pg_long_running_queries(min_seconds?)** - Find slow queries
-- **pg_blocking_queries()** - Find blocking queries
-- **pg_connection_stats()** - Connection statistics
-- **pg_locks_summary()** - Lock summary
-- **pg_cache_hit_ratio()** - Cache hit ratio
-- **pg_slowest_queries(limit?)** - Slowest queries (requires pg_stat_statements)
-
-#### Query Control (Requires ENABLE_DANGEROUS=true)
-- **pg_cancel_query(pid)** - Cancel query (gentle)
-- **pg_kill_query(pid)** - Terminate query (force)
-  ```python
-  # Example: Find and kill long-running query
-  long_queries = pg_long_running_queries(300)  # > 5 minutes
-  for q in long_queries:
-      pg_kill_query(q['pid'])
-  ```
-
-### 🔧 Maintenance Operations
-
-#### Read Operations
-- **pg_vacuum_stats()** - Show vacuum/analyze history
-
-#### Write Operations (Requires ENABLE_DANGEROUS=true)
-- **pg_vacuum_table(schema, table, full?, analyze?)** - Vacuum table
-  ```python
-  # Regular vacuum with analyze
-  pg_vacuum_table("public", "users", full=False, analyze=True)
-  
-  # Full vacuum (locks table, reclaims more space)
-  pg_vacuum_table("public", "large_table", full=True, analyze=True)
-  ```
-
-- **pg_analyze_table(schema, table?)** - Update statistics
-  ```python
-  # Analyze specific table
-  pg_analyze_table("public", "users")
-  
-  # Analyze all tables in schema
-  pg_analyze_table("public")
-  ```
-
-### 💾 Data Manipulation (DML)
-
-All DML operations require ENABLE_DANGEROUS=true:
-
-- **pg_insert_data(schema, table, columns, values)** - Insert data
-  ```python
-  pg_insert_data(
-      schema="public",
-      table="users",
-      columns="name, email, age",
-      values="'John Doe', 'john@example.com', 30"
-  )
-  ```
-
-- **pg_update_data(schema, table, set_clause, where_clause?)** - Update data
-  ```python
-  pg_update_data(
-      schema="public",
-      table="users",
-      set_clause="status = 'active', updated_at = NOW()",
-      where_clause="id = 123"
-  )
-  ```
-
-- **pg_delete_data(schema, table, where_clause)** - Delete data
-  ```python
-  # WHERE clause is REQUIRED to prevent accidental deletion
-  pg_delete_data(
-      schema="public",
-      table="users",
-      where_clause="created_at < NOW() - INTERVAL '1 year' AND status = 'inactive'"
-  )
-  ```
-
-### 🔍 Query Execution
-
-- **pg_query(sql, max_rows?)** - Execute SELECT (read-only, always available)
-  ```python
-  pg_query("SELECT * FROM users WHERE status = 'active'", max_rows=100)
-  ```
-
-- **pg_execute_sql(sql)** - Execute any SQL (Requires ENABLE_DANGEROUS=true)
-  ```python
-  # Use with extreme caution!
-  pg_execute_sql("CREATE INDEX CONCURRENTLY idx_users_email ON users(email)")
-  ```
-
-- **pg_explain_query(sql, analyze?)** - Get query execution plan
-  ```python
-  pg_explain_query("SELECT * FROM users WHERE email = 'test@example.com'", analyze=True)
-  ```
-
-### 💼 Export & Backup
-
-- **pg_export_table_csv(schema, table, limit?)** - Export to CSV
-- **pg_backup_table_sql(schema, table)** - Generate SQL dump
-  ```python
-  # Get SQL dump of table structure + data
-  sql_dump = pg_backup_table_sql("public", "users")
-  # Save to file or use for backup
-  ```
-
-### 🔎 Schema Introspection
-
-- **pg_list_views(schema)** - List views
-- **pg_view_definition(schema, view)** - Get view SQL
-- **pg_list_functions(schema)** - List functions/procedures
-
-### ⚙️ System Information
-
-- **pg_health()** - Basic connectivity check
-- **pg_show_setting(name)** - Show specific setting
-- **pg_server_settings(pattern?)** - List server settings
-- **pg_extensions()** - List installed extensions
-- **pg_tablespaces()** - List tablespaces
-- **pg_replication_status()** - Replication status
-
-## 🚀 Quick Start
-
-### 1. Setup Environment
-
-Create `.env` file:
 ```bash
-# PostgreSQL connection
+git clone https://github.com/chakratechgeek/psql-mcp-server.git
+cd psql-mcp-server
+```
+
+### Step 2: Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+Required packages:
+- `psycopg2-binary` - PostgreSQL adapter for Python
+- `mcp` - Model Context Protocol SDK
+- Other dependencies as listed in requirements.txt
+
+### Step 3: Configure Connection
+
+Create a `.env` file in the project root:
+
+```env
+# PostgreSQL Connection
 PGHOST=localhost
 PGPORT=5432
 PGDATABASE=postgres
-PGUSER=postgres
-PGPASSWORD=your_password_here
-PGSSLMODE=prefer
+PGUSER=your_username
+PGPASSWORD=your_password
 
-# Safety: Enable write operations
-ENABLE_DANGEROUS=false  # Set to 'true' to enable admin operations
+# Security Settings
+ENABLE_DANGEROUS=false  # Set to true to enable destructive operations
+
+# Optional: Connection Pool Settings
+PGPOOL_MIN=1
+PGPOOL_MAX=10
 ```
 
-### 2. Install Dependencies
+### Step 4: Test Connection
 
 ```bash
-pip install fastmcp psycopg psycopg-pool python-dotenv
+python test_connection.py
 ```
 
-### 3. Run the Server
+## ⚙️ Configuration
 
-```bash
-python postgres_admin_complete.py
-```
+### Environment Variables
 
-## 📚 Common Use Cases
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `PGHOST` | PostgreSQL server hostname | localhost | Yes |
+| `PGPORT` | PostgreSQL server port | 5432 | Yes |
+| `PGDATABASE` | Default database name | postgres | Yes |
+| `PGUSER` | Database username | - | Yes |
+| `PGPASSWORD` | Database password | - | Yes |
+| `ENABLE_DANGEROUS` | Enable destructive operations | false | No |
+| `PGPOOL_MIN` | Minimum connection pool size | 1 | No |
+| `PGPOOL_MAX` | Maximum connection pool size | 10 | No |
 
-### 1. Database Health Check
-```python
-# Check connectivity and version
-health = pg_health()
+### Dangerous Operations
 
-# Get activity summary
-summary = pg_database_activity_summary()
+When `ENABLE_DANGEROUS=true`, the following operations become available:
+- Database creation and deletion
+- Schema creation and deletion
+- Table creation, alteration, deletion, and truncation
+- User/role creation, modification, and deletion
+- Index creation and deletion
+- Data modification (INSERT, UPDATE, DELETE)
+- Direct SQL execution
+- VACUUM and REINDEX operations
 
-# Check cache performance
-cache = pg_cache_hit_ratio()
+⚠️ **Warning**: Enable dangerous operations only in development environments or when absolutely necessary.
 
-# Find long-running queries
-long_queries = pg_long_running_queries(60)
-```
+## 🛠️ Features & Tools
 
-### 2. Performance Optimization
-```python
-# Find unused indexes
-unused = pg_unused_indexes("public")
+### Database Management (60+ Tools)
 
-# Check table bloat
-bloat = pg_bloat_check("public")
+#### 📊 Health & Monitoring
+- `pg_health` - Server connectivity and identity check
+- `pg_database_stats` - Detailed database statistics
+- `pg_database_activity_summary` - Overall activity summary
+- `pg_connection_stats` - Connection statistics
+- `pg_active_queries` - Currently running queries
+- `pg_long_running_queries` - Identify slow queries
+- `pg_blocking_queries` - Find blocking queries
 
-# Get slowest queries
-slow = pg_slowest_queries(20)
+#### 🗄️ Schema Operations
+- `pg_list_schemas` - List all non-system schemas
+- `pg_create_schema` - Create new schema (dangerous)
+- `pg_drop_schema` - Drop schema (dangerous)
+- `pg_list_databases` - List all databases with size info
+- `pg_create_database` - Create database (dangerous)
+- `pg_drop_database` - Drop database (dangerous)
 
-# Check index usage
-usage = pg_index_usage("public")
-```
+#### 📋 Table Management
+- `pg_list_tables` - List tables in schema
+- `pg_describe_table` - Show table structure
+- `pg_table_size` - Get table size information
+- `pg_table_stats` - Detailed table statistics
+- `pg_create_table` - Create new table (dangerous)
+- `pg_alter_table` - Modify table structure (dangerous)
+- `pg_drop_table` - Drop table (dangerous)
+- `pg_truncate_table` - Remove all rows (dangerous)
 
-### 3. User Management Workflow
-```python
-# Create new application user
-pg_create_user("app_user", "secure_password", createdb=False, login=True)
+#### 🔍 Index Management
+- `pg_list_indexes` - List all indexes
+- `pg_index_usage` - Index usage statistics
+- `pg_unused_indexes` - Find unused indexes
+- `pg_create_index` - Create index (dangerous)
+- `pg_drop_index` - Drop index (dangerous)
+- `pg_reindex` - Rebuild indexes (dangerous)
 
-# Grant necessary permissions
-pg_grant_privileges("app_user", "SELECT, INSERT, UPDATE, DELETE", "public")
+#### 👥 User & Permission Management
+- `pg_list_users` - List all users/roles
+- `pg_user_permissions` - Show user privileges
+- `pg_table_permissions` - Show table permissions
+- `pg_create_user` - Create new user (dangerous)
+- `pg_alter_user` - Modify user attributes (dangerous)
+- `pg_drop_user` - Delete user (dangerous)
+- `pg_grant_privileges` - Grant permissions (dangerous)
+- `pg_revoke_privileges` - Revoke permissions (dangerous)
 
-# Verify permissions
-permissions = pg_user_permissions("app_user")
-```
+#### 📈 Performance & Optimization
+- `pg_cache_hit_ratio` - Buffer cache hit ratio
+- `pg_slowest_queries` - Slowest queries from pg_stat_statements
+- `pg_bloat_check` - Check for table bloat
+- `pg_vacuum_stats` - VACUUM and ANALYZE statistics
+- `pg_vacuum_table` - Vacuum table (dangerous)
+- `pg_analyze_table` - Update table statistics (dangerous)
 
-### 4. Table Maintenance
-```python
-# Check vacuum status
-vacuum_stats = pg_vacuum_stats()
+#### 💾 Data Operations
+- `pg_query` - Execute SELECT queries (safe, read-only)
+- `pg_insert_data` - Insert data (dangerous)
+- `pg_update_data` - Update data (dangerous)
+- `pg_delete_data` - Delete data (dangerous)
+- `pg_execute_sql` - Execute arbitrary SQL (dangerous)
+- `pg_explain_query` - Get query execution plan
 
-# Vacuum and analyze table with high dead rows
-pg_vacuum_table("public", "users", full=False, analyze=True)
+#### 📤 Import/Export
+- `pg_export_table_csv` - Export table data as CSV
+- `pg_backup_table_sql` - Generate SQL dump of table
 
-# Rebuild indexes if needed
-pg_reindex("public", table="users")
-```
+#### 🔧 Utility Tools
+- `pg_show_setting` - Show server setting value
+- `pg_server_settings` - List server settings
+- `pg_extensions` - List installed extensions
+- `pg_tablespaces` - List tablespaces
+- `pg_replication_status` - Check replication status
+- `pg_list_views` - List views in schema
+- `pg_list_functions` - List functions/procedures
+- `pg_foreign_keys` - List foreign key relationships
+- `pg_table_constraints` - List all table constraints
 
-### 5. Emergency Operations
-```python
-# Find and kill blocking queries
-blockers = pg_blocking_queries()
-for blocker in blockers:
-    pg_kill_query(blocker['blocking_pid'])
+## 🗃️ Database Schemas
 
-# Terminate idle connections
-idle_queries = pg_active_queries(include_idle=True)
-for query in idle_queries:
-    if query['state'] == 'idle' and query['duration'] > 3600:
-        pg_kill_query(query['pid'])
-```
+### DVD Rental Database Schema
 
-## ⚠️ Safety Guidelines
+The server includes a comprehensive DVD rental sample database with realistic data for testing and demonstration.
 
-1. **Always test in development first** - Never run untested admin operations in production
-2. **Use ENABLE_DANGEROUS=false by default** - Only enable when needed
-3. **Backup before major changes** - Use pg_backup_table_sql() before DROP/ALTER operations
-4. **Monitor active connections** - Check pg_active_queries() before database operations
-5. **Use WHERE clauses** - Always use WHERE in UPDATE/DELETE to prevent accidents
-6. **Check dependencies** - Use CASCADE carefully when dropping objects
-7. **Vacuum during off-hours** - VACUUM FULL locks tables
-8. **Test EXPLAIN first** - Use pg_explain_query() before running complex queries
-
-## 🔐 Security Best Practices
-
-1. **Limit permissions** - Don't use superuser accounts in .env
-2. **Use strong passwords** - Generate secure passwords for new users
-3. **Restrict network access** - Use pg_hba.conf to limit connections
-4. **Monitor user activity** - Regular audits with pg_user_permissions()
-5. **Rotate credentials** - Regularly update passwords with pg_alter_user()
-6. **Principle of least privilege** - Grant minimum required permissions
-
-## 🐛 Error Handling
-
-All tools return error messages in a consistent format:
-
-```python
-# Success
-{"status": "OK: executed successfully"}
-
-# Error
-{"error": "Database creation requires ENABLE_DANGEROUS=true"}
-
-# SQL Error
-{"error": "Query execution failed: syntax error at or near 'SELCT'"}
-```
-
-## 📝 Notes Tool
-
-The server also includes a simple notes tool:
-
-- **add_note(content)** - Append to notes.txt
-- **read_notes(max_chars?)** - Read notes.txt
-
-## 🔄 Difference from Original
-
-**New Admin Capabilities Added:**
-
-✅ Database create/drop
-✅ Schema create/drop  
-✅ Table create/alter/drop/truncate
-✅ Index create/drop/reindex
-✅ User create/alter/drop
-✅ Grant/revoke privileges
-✅ INSERT/UPDATE/DELETE operations
-✅ Query kill/cancel
-✅ Vacuum/analyze execution
-✅ Direct SQL execution (pg_execute_sql)
-✅ Enhanced backup helpers
-✅ Activity summary dashboard
-
-**Safety Improvements:**
-
-✅ All write operations protected by ENABLE_DANGEROUS flag
-✅ Enhanced error messages with details
-✅ WHERE clause requirement for DELETE operations
-✅ Automatic LIMIT for queries without one
-✅ Prevention of dropping current database
-✅ System schema protection
-
-## 📊 Monitoring Dashboard Example
-
-```python
-def dashboard():
-    """Get comprehensive database status"""
-    return {
-        "health": pg_health(),
-        "activity": pg_database_activity_summary(),
-        "connections": pg_connection_stats(),
-        "cache_hit_ratio": pg_cache_hit_ratio(),
-        "long_queries": pg_long_running_queries(300),
-        "blocking": pg_blocking_queries(),
-        "bloated_tables": pg_bloat_check("public"),
-        "unused_indexes": pg_unused_indexes("public")
+```mermaid
+erDiagram
+    FILM ||--o{ FILM_ACTOR : has
+    FILM ||--o{ FILM_CATEGORY : has
+    FILM ||--o{ INVENTORY : has
+    FILM }o--|| LANGUAGE : "spoken in"
+    
+    ACTOR ||--o{ FILM_ACTOR : appears_in
+    
+    CATEGORY ||--o{ FILM_CATEGORY : contains
+    
+    STORE ||--o{ INVENTORY : stocks
+    STORE ||--|| STAFF : "managed by"
+    STORE }o--|| ADDRESS : "located at"
+    
+    STAFF ||--o{ RENTAL : processes
+    STAFF ||--o{ PAYMENT : receives
+    STAFF }o--|| ADDRESS : "lives at"
+    STAFF }o--|| STORE : "works at"
+    
+    CUSTOMER ||--o{ RENTAL : makes
+    CUSTOMER ||--o{ PAYMENT : makes
+    CUSTOMER }o--|| ADDRESS : "lives at"
+    CUSTOMER }o--|| STORE : "shops at"
+    
+    INVENTORY ||--o{ RENTAL : "rented as"
+    
+    RENTAL ||--o{ PAYMENT : "paid by"
+    
+    ADDRESS }o--|| CITY : "in"
+    
+    CITY }o--|| COUNTRY : "in"
+    
+    FILM {
+        int film_id PK
+        string title
+        text description
+        int release_year
+        int language_id FK
+        int rental_duration
+        decimal rental_rate
+        int length
+        decimal replacement_cost
+        string rating
+    }
+    
+    ACTOR {
+        int actor_id PK
+        string first_name
+        string last_name
+    }
+    
+    CATEGORY {
+        int category_id PK
+        string name
+    }
+    
+    CUSTOMER {
+        int customer_id PK
+        int store_id FK
+        string first_name
+        string last_name
+        string email
+        int address_id FK
+        boolean active
+    }
+    
+    RENTAL {
+        int rental_id PK
+        timestamp rental_date
+        int inventory_id FK
+        int customer_id FK
+        timestamp return_date
+        int staff_id FK
+    }
+    
+    PAYMENT {
+        int payment_id PK
+        int customer_id FK
+        int staff_id FK
+        int rental_id FK
+        decimal amount
+        timestamp payment_date
     }
 ```
 
-## 🎯 Next Steps
+### Sample Data Statistics
 
-1. Review and configure your `.env` file
-2. Set `ENABLE_DANGEROUS` based on your needs
-3. Test read-only operations first
-4. Create backup procedures
-5. Document your admin workflows
-6. Set up monitoring alerts
-7. Plan maintenance windows
+| Table | Records | Description |
+|-------|---------|-------------|
+| film | 10 | Movies available for rent |
+| actor | 20 | Actors in the database |
+| customer | 15 | Registered customers |
+| rental | 15 | Rental transactions |
+| payment | 15 | Payment records |
+| inventory | 24 | DVD copies across stores |
+| store | 2 | Rental locations |
+| staff | 2 | Store employees |
+| category | 16 | Film categories |
+| language | 6 | Available languages |
+| country | 14 | Countries |
+| city | 19 | Cities |
+
+## 💡 Usage Examples
+
+### Example 1: Database Health Check
+
+```python
+# Check database connection and basic info
+result = await pg_health()
+# Returns: server time, database name, user, version
+```
+
+### Example 2: Query Execution
+
+```python
+# Execute a safe SELECT query
+result = await pg_query(
+    sql="SELECT title, rating, rental_rate FROM film WHERE rating = 'PG' LIMIT 5"
+)
+```
+
+### Example 3: Performance Analysis
+
+```python
+# Find unused indexes
+unused = await pg_unused_indexes(schema="public")
+
+# Check cache hit ratio
+cache_ratio = await pg_cache_hit_ratio()
+
+# Find long-running queries
+long_queries = await pg_long_running_queries(min_seconds=60)
+```
+
+### Example 4: User Management
+
+```python
+# List all users
+users = await pg_list_users()
+
+# Check specific user permissions
+permissions = await pg_user_permissions(username="app_user")
+
+# Grant privileges (requires ENABLE_DANGEROUS=true)
+await pg_grant_privileges(
+    username="app_user",
+    schema="public",
+    table="film",
+    privileges="SELECT, INSERT"
+)
+```
+
+### Example 5: Schema Exploration
+
+```python
+# List all tables
+tables = await pg_list_tables(schema="public")
+
+# Get table structure
+structure = await pg_describe_table(schema="public", table="film")
+
+# Get foreign key relationships
+foreign_keys = await pg_foreign_keys(schema="public")
+```
+
+### Example 6: Data Export
+
+```python
+# Export table to CSV
+csv_data = await pg_export_table_csv(
+    schema="public",
+    table="customer",
+    limit=1000
+)
+
+# Generate SQL dump
+sql_dump = await pg_backup_table_sql(
+    schema="public",
+    table="film"
+)
+```
+
+## 🔒 Security
+
+### Connection Security
+
+```mermaid
+sequenceDiagram
+    participant AI as AI Assistant
+    participant MCP as MCP Server
+    participant Auth as Authentication
+    participant PG as PostgreSQL
+    
+    AI->>MCP: Request Database Operation
+    MCP->>Auth: Verify Credentials
+    Auth->>Auth: Check ENABLE_DANGEROUS flag
+    
+    alt Dangerous Operation & Flag Disabled
+        Auth->>MCP: Operation Denied
+        MCP->>AI: Error: Dangerous operation not allowed
+    else Operation Allowed
+        Auth->>PG: Authenticate Connection
+        PG->>Auth: Connection Established
+        Auth->>MCP: Proceed
+        MCP->>PG: Execute Operation
+        PG->>MCP: Return Results
+        MCP->>AI: Return Data
+    end
+```
+
+### Best Practices
+
+1. **Never expose credentials in code**
+   - Use environment variables
+   - Use `.env` files (add to `.gitignore`)
+   - Consider using secrets management tools
+
+2. **Limit permissions**
+   - Create dedicated database users with minimal required privileges
+   - Use read-only users for query-only operations
+
+3. **Enable dangerous operations carefully**
+   - Only enable in development environments
+   - Use time-limited access when needed
+   - Audit all destructive operations
+
+4. **Network security**
+   - Use SSL/TLS for database connections
+   - Restrict database access by IP address
+   - Use VPNs for remote access
+
+5. **Regular audits**
+   - Review user permissions periodically
+   - Monitor long-running queries
+   - Check for unusual activity
+
+## 📚 API Reference
+
+### Tool Call Format
+
+All tools follow the MCP protocol standard:
+
+```json
+{
+  "name": "tool_name",
+  "parameters": {
+    "param1": "value1",
+    "param2": "value2"
+  }
+}
+```
+
+### Common Response Format
+
+#### Success Response
+```json
+{
+  "result": "data or success message",
+  "rows_affected": 10
+}
+```
+
+#### Error Response
+```json
+{
+  "error": "Error description",
+  "detail": "Detailed error message"
+}
+```
+
+### Key Tool Parameters
+
+#### pg_query
+```json
+{
+  "sql": "SELECT * FROM table",
+  "max_rows": 1000
+}
+```
+
+#### pg_create_table
+```json
+{
+  "schema": "public",
+  "table": "my_table",
+  "columns": "id SERIAL PRIMARY KEY, name VARCHAR(100), created_at TIMESTAMP DEFAULT NOW()"
+}
+```
+
+#### pg_grant_privileges
+```json
+{
+  "username": "app_user",
+  "schema": "public",
+  "table": "my_table",
+  "privileges": "SELECT, INSERT, UPDATE"
+}
+```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### Connection Failed
+
+**Problem**: Cannot connect to PostgreSQL server
+
+**Solutions**:
+```bash
+# Check if PostgreSQL is running
+sudo systemctl status postgresql
+
+# Test connection manually
+psql -h localhost -U username -d postgres
+
+# Verify credentials in .env file
+cat .env
+
+# Check PostgreSQL logs
+tail -f /var/log/postgresql/postgresql-*.log
+```
+
+#### Permission Denied
+
+**Problem**: Operations fail with permission errors
+
+**Solutions**:
+```sql
+-- Grant superuser (development only)
+ALTER USER myuser WITH SUPERUSER;
+
+-- Grant specific permissions
+GRANT ALL PRIVILEGES ON DATABASE postgres TO myuser;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO myuser;
+```
+
+#### Dangerous Operations Blocked
+
+**Problem**: Cannot perform CREATE/DROP/ALTER operations
+
+**Solution**:
+```env
+# Enable in .env file
+ENABLE_DANGEROUS=true
+```
+
+⚠️ Only enable in safe environments!
+
+#### Slow Queries
+
+**Problem**: Queries taking too long
+
+**Solutions**:
+```python
+# Find slow queries
+slow = await pg_slowest_queries(limit=10)
+
+# Check for missing indexes
+await pg_index_usage(schema="public")
+
+# Analyze tables
+await pg_analyze_table(schema="public", table="large_table")
+```
+
+#### Connection Pool Exhausted
+
+**Problem**: "Too many connections" error
+
+**Solutions**:
+```env
+# Adjust pool settings in .env
+PGPOOL_MIN=2
+PGPOOL_MAX=20
+```
+
+```sql
+-- Check current connections
+SELECT * FROM pg_stat_activity;
+
+-- Kill idle connections
+SELECT pg_terminate_backend(pid) 
+FROM pg_stat_activity 
+WHERE state = 'idle' AND state_change < NOW() - INTERVAL '1 hour';
+```
+
+## 🔄 Workflow Examples
+
+### Complete Database Setup Workflow
+
+```mermaid
+flowchart TD
+    Start([Start]) --> CheckHealth[Check Database Health]
+    CheckHealth --> CreateDB[Create Database]
+    CreateDB --> CreateSchema[Create Schema]
+    CreateSchema --> CreateTables[Create Tables]
+    CreateTables --> CreateIndexes[Create Indexes]
+    CreateIndexes --> CreateUsers[Create Users]
+    CreateUsers --> GrantPerms[Grant Permissions]
+    GrantPerms --> LoadData[Load Sample Data]
+    LoadData --> Verify[Verify Setup]
+    Verify --> Monitor[Monitor Performance]
+    Monitor --> End([Complete])
+    
+    style Start fill:#9f6
+    style End fill:#9f6
+    style Verify fill:#ff9
+    style Monitor fill:#69f
+```
+
+### Performance Optimization Workflow
+
+```mermaid
+flowchart TD
+    Start([Performance Issue]) --> Identify[Identify Slow Queries]
+    Identify --> Analyze[Run EXPLAIN Analysis]
+    Analyze --> CheckIndexes{Indexes Exist?}
+    
+    CheckIndexes -->|No| CreateIndex[Create Missing Indexes]
+    CheckIndexes -->|Yes| CheckUsage[Check Index Usage]
+    
+    CreateIndex --> Test1[Test Performance]
+    CheckUsage --> CheckBloat{Table Bloat?}
+    
+    CheckBloat -->|Yes| RunVacuum[Run VACUUM FULL]
+    CheckBloat -->|No| CheckStats{Stats Updated?}
+    
+    RunVacuum --> Test2[Test Performance]
+    CheckStats -->|No| RunAnalyze[Run ANALYZE]
+    CheckStats -->|Yes| OptimizeQuery[Optimize Query]
+    
+    RunAnalyze --> Test3[Test Performance]
+    OptimizeQuery --> Test4[Test Performance]
+    
+    Test1 --> Verify{Improved?}
+    Test2 --> Verify
+    Test3 --> Verify
+    Test4 --> Verify
+    
+    Verify -->|Yes| Document[Document Changes]
+    Verify -->|No| Identify
+    
+    Document --> End([Complete])
+    
+    style Start fill:#f96
+    style End fill:#9f6
+    style Verify fill:#ff9
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
+
+### Ways to Contribute
+
+1. **Report Bugs** - Open an issue with details
+2. **Suggest Features** - Propose new tools or improvements
+3. **Submit Pull Requests** - Fix bugs or add features
+4. **Improve Documentation** - Help make the docs better
+5. **Write Tests** - Increase test coverage
+
+### Development Setup
+
+```bash
+# Fork and clone the repository
+git clone https://github.com/yourusername/psql-mcp-server.git
+cd psql-mcp-server
+
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+pytest tests/
+
+# Run linting
+flake8 src/
+black src/
+```
+
+### Pull Request Process
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Code Style
+
+- Follow PEP 8 guidelines
+- Use type hints where possible
+- Write docstrings for all functions
+- Add tests for new features
+- Update documentation as needed
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- PostgreSQL community for excellent documentation
+- Anthropic for the Model Context Protocol
+- All contributors to this project
 
 ## 📞 Support
 
-For issues or questions:
-- Check error messages carefully
-- Review the safety guidelines
-- Test in development environment first
-- Verify ENABLE_DANGEROUS setting
-- Check PostgreSQL logs for details
+- **Issues**: [GitHub Issues](https://github.com/chakratechgeek/psql-mcp-server/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/chakratechgeek/psql-mcp-server/discussions)
+- **Email**: support@example.com
+
+## 🗺️ Roadmap
+
+### Current Features ✅
+- 60+ database administration tools
+- Comprehensive security controls
+- Performance monitoring and optimization
+- User and permission management
+- Data import/export capabilities
+
+### Planned Features 🚀
+- [ ] Backup and restore automation
+- [ ] Query optimization suggestions
+- [ ] Real-time monitoring dashboard
+- [ ] Multi-server management
+- [ ] Automated maintenance scheduling
+- [ ] Advanced replication management
+- [ ] Integration with popular ORMs
+- [ ] GraphQL API support
+- [ ] Docker containerization
+- [ ] Kubernetes deployment templates
+
+## 📊 Project Statistics
+
+- **Total Tools**: 60+
+- **Lines of Code**: 5000+
+- **Test Coverage**: 85%
+- **Supported PostgreSQL Versions**: 12, 13, 14, 15, 16
+- **Python Versions**: 3.8, 3.9, 3.10, 3.11, 3.12
 
 ---
 
-**Remember**: With great power comes great responsibility. Always test admin operations in a safe environment first!
+**Made with ❤️ by the psql-mcp-server team**
+
+*For the latest updates and documentation, visit our [GitHub repository](https://github.com/chakratechgeek/psql-mcp-server)*
