@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostgreSQL MCP Server - Interactive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .architecture {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+
+        .component {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 150px;
+            margin: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .component:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .component h3 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .component p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: #667eea;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .demo-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .demo-btn:active {
+            transform: translateY(0);
+        }
+
+        .console {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .console-line {
+            margin: 5px 0;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .console-prompt {
+            color: #4ec9b0;
+        }
+
+        .console-command {
+            color: #dcdcaa;
+        }
+
+        .console-output {
+            color: #ce9178;
+        }
+
+        .console-success {
+            color: #4ec9b0;
+        }
+
+        .console-error {
+            color: #f48771;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-step {
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            position: relative;
+            margin: 10px;
+        }
+
+        .flow-box {
+            background: #f0f0f0;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .flow-box.active {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .flow-arrow {
+            font-size: 2em;
+            color: #667eea;
+            margin: 0 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .tools-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .tool-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .tool-card:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .tool-category {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 PostgreSQL MCP Server</h1>
+            <p>Interactive Visual Demonstration</p>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="demo-section">
+            <h2>📊 Server Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">119</div>
+                    <div class="stat-label">Total Tools</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">74</div>
+                    <div class="stat-label">PostgreSQL Tools</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">30</div>
+                    <div class="stat-label">Git Tools</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">13</div>
+                    <div class="stat-label">Filesystem Tools</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">2</div>
+                    <div class="stat-label">Notes Tools</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture -->
+        <div class="demo-section">
+            <h2>🏗️ System Architecture</h2>
+            <div class="architecture">
+                <div class="component">
+                    <h3>👤 You</h3>
+                    <p>Human User</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="component">
+                    <h3>🤖 Claude</h3>
+                    <p>AI Assistant</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="component">
+                    <h3>🔌 MCP Server</h3>
+                    <p>119 Tools</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="component">
+                    <h3>🖥️ Your VM</h3>
+                    <p>Oracle Linux 10.1</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Demo Controls -->
+        <div class="demo-section">
+            <h2>🎮 Interactive Demo Controls</h2>
+            <p style="margin-bottom: 20px;">Click any button to see the MCP server in action!</p>
+            
+            <div class="demo-controls">
+                <button class="demo-btn" onclick="runDemo('health')">🏥 Check Database Health</button>
+                <button class="demo-btn" onclick="runDemo('databases')">📚 List Databases</button>
+                <button class="demo-btn" onclick="runDemo('files')">📁 List Files</button>
+                <button class="demo-btn" onclick="runDemo('git')">🔧 Check Git Status</button>
+                <button class="demo-btn" onclick="runDemo('performance')">⚡ Performance Check</button>
+                <button class="demo-btn" onclick="runDemo('tables')">📊 List Tables</button>
+                <button class="demo-btn" onclick="clearConsole()">🗑️ Clear Console</button>
+            </div>
+
+            <div class="spinner" id="spinner"></div>
+
+            <!-- Console Output -->
+            <div class="console" id="console">
+                <div class="console-line console-success">
+                    ✓ MCP Server Ready - Waiting for commands...
+                </div>
+                <div class="console-line">
+                    Server: <span class="highlight">postgres-admin-remote</span> | Port: <span class="highlight">8000</span> | Status: <span class="console-success">●  RUNNING</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flow Visualization -->
+        <div class="demo-section">
+            <h2>🔄 Command Flow Visualization</h2>
+            <div class="flow-diagram" id="flowDiagram">
+                <div class="flow-step">
+                    <div class="flow-box" id="step1">
+                        <strong>1. Request</strong><br>
+                        User asks question
+                    </div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-box" id="step2">
+                        <strong>2. Parse</strong><br>
+                        Claude understands
+                    </div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-box" id="step3">
+                        <strong>3. Execute</strong><br>
+                        MCP tool called
+                    </div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-box" id="step4">
+                        <strong>4. Process</strong><br>
+                        Server executes
+                    </div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-box" id="step5">
+                        <strong>5. Response</strong><br>
+                        Results returned
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tools Showcase -->
+        <div class="demo-section">
+            <h2>🛠️ Available Tools Categories</h2>
+            <div class="tools-showcase">
+                <div class="tool-card">
+                    <div class="tool-category">📊 PostgreSQL (74 tools)</div>
+                    <div>Health checks, database management, queries, performance monitoring, user management</div>
+                </div>
+                <div class="tool-card">
+                    <div class="tool-category">🔧 Git (30 tools)</div>
+                    <div>Init, clone, commit, push, pull, branch management, stashing, tags</div>
+                </div>
+                <div class="tool-card">
+                    <div class="tool-category">📁 Filesystem (13 tools)</div>
+                    <div>Read/write files, list directories, copy, move, search, disk usage</div>
+                </div>
+                <div class="tool-card">
+                    <div class="tool-category">📝 Notes (2 tools)</div>
+                    <div>Add notes, read notes from notes.txt file</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const demoScenarios = {
+            health: {
+                title: 'Database Health Check',
+                steps: [
+                    { type: 'prompt', text: '$ User: "Check my database health"' },
+                    { type: 'command', text: '🤖 Claude: Calling pg_health()...' },
+                    { type: 'output', text: '🔌 Connecting to PostgreSQL at 192.168.0.112:5432...' },
+                    { type: 'output', text: '✓ Connected successfully!' },
+                    { type: 'success', text: '📊 Server: PostgreSQL 16.10' },
+                    { type: 'success', text: '👤 User: myuser' },
+                    { type: 'success', text: '📅 Time: 2026-01-02 15:07:08' },
+                    { type: 'success', text: '✅ Database is healthy!' }
+                ]
+            },
+            databases: {
+                title: 'List Databases',
+                steps: [
+                    { type: 'prompt', text: '$ User: "Show me all databases"' },
+                    { type: 'command', text: '🤖 Claude: Calling pg_list_databases()...' },
+                    { type: 'output', text: '📚 Querying database list...' },
+                    { type: 'success', text: '✓ postgres (8996 kB, 1 connection)' },
+                    { type: 'success', text: '✓ movies (7804 kB, 0 connections)' },
+                    { type: 'success', text: '✓ testdb (7649 kB, 0 connections)' },
+                    { type: 'success', text: '✓ plc_cmp (7649 kB, 0 connections)' },
+                    { type: 'success', text: '✓ my_comp (7649 kB, 0 connections)' },
+                    { type: 'success', text: '📊 Total: 5 databases found' }
+                ]
+            },
+            files: {
+                title: 'List Files',
+                steps: [
+                    { type: 'prompt', text: '$ User: "Show files in MCP server directory"' },
+                    { type: 'command', text: '🤖 Claude: Calling fs_list_directory()...' },
+                    { type: 'output', text: '📁 Reading /home/app/psql-mcp-server...' },
+                    { type: 'success', text: '✓ main.py (70 KB) - Main server code' },
+                    { type: 'success', text: '✓ README.md (22 KB) - Documentation' },
+                    { type: 'success', text: '✓ notes.txt (476 bytes) - Notes file' },
+                    { type: 'success', text: '✓ server.py (9.5 KB) - Server module' },
+                    { type: 'success', text: '📊 Total: 9 files found' }
+                ]
+            },
+            git: {
+                title: 'Git Status Check',
+                steps: [
+                    { type: 'prompt', text: '$ User: "Check git status"' },
+                    { type: 'command', text: '🤖 Claude: Calling git_status()...' },
+                    { type: 'output', text: '🔧 Executing git status...' },
+                    { type: 'success', text: '📌 Branch: main' },
+                    { type: 'output', text: '📝 Modified: main.py' },
+                    { type: 'output', text: '❓ Untracked: .gitignore, pyproject.toml, server.py' },
+                    { type: 'success', text: '✓ Git status retrieved successfully' }
+                ]
+            },
+            performance: {
+                title: 'Performance Check',
+                steps: [
+                    { type: 'prompt', text: '$ User: "Check database performance"' },
+                    { type: 'command', text: '🤖 Claude: Calling pg_cache_hit_ratio()...' },
+                    { type: 'output', text: '⚡ Analyzing cache performance...' },
+                    { type: 'success', text: '📊 Heap Reads: 0' },
+                    { type: 'success', text: '📊 Heap Hits: 1744' },
+                    { type: 'success', text: '✅ Cache Hit Ratio: 100.00%' },
+                    { type: 'success', text: '🎯 Excellent performance!' }
+                ]
+            },
+            tables: {
+                title: 'List Tables',
+                steps: [
+                    { type: 'prompt', text: '$ User: "Show me all tables"' },
+                    { type: 'command', text: '🤖 Claude: Calling pg_list_tables()...' },
+                    { type: 'output', text: '📊 Querying schema: public...' },
+                    { type: 'success', text: '✓ actor, actors, address, category' },
+                    { type: 'success', text: '✓ city, country, customer, directors' },
+                    { type: 'success', text: '✓ film, film_actor, film_category' },
+                    { type: 'success', text: '✓ genres, inventory, language' },
+                    { type: 'success', text: '✓ movies, payment, rental, staff, store' },
+                    { type: 'success', text: '📊 Total: 22 tables found' }
+                ]
+            }
+        };
+
+        function runDemo(scenario) {
+            const demo = demoScenarios[scenario];
+            const console = document.getElementById('console');
+            const spinner = document.getElementById('spinner');
+            
+            // Clear console
+            console.innerHTML = '';
+            
+            // Show spinner
+            spinner.style.display = 'block';
+            
+            // Add title
+            const titleLine = document.createElement('div');
+            titleLine.className = 'console-line console-success';
+            titleLine.innerHTML = `<strong>═══ ${demo.title} ═══</strong>`;
+            console.appendChild(titleLine);
+            
+            // Animate flow
+            animateFlow();
+            
+            // Add steps with delay
+            let delay = 500;
+            demo.steps.forEach((step, index) => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.className = `console-line console-${step.type}`;
+                    line.textContent = step.text;
+                    console.appendChild(line);
+                    console.scrollTop = console.scrollHeight;
+                    
+                    if (index === demo.steps.length - 1) {
+                        spinner.style.display = 'none';
+                        setTimeout(() => resetFlow(), 500);
+                    }
+                }, delay);
+                delay += 400;
+            });
+        }
+
+        function clearConsole() {
+            const console = document.getElementById('console');
+            console.innerHTML = `
+                <div class="console-line console-success">
+                    ✓ MCP Server Ready - Waiting for commands...
+                </div>
+                <div class="console-line">
+                    Server: <span class="highlight">postgres-admin-remote</span> | Port: <span class="highlight">8000</span> | Status: <span class="console-success">●  RUNNING</span>
+                </div>
+            `;
+        }
+
+        function animateFlow() {
+            const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    document.getElementById(step).classList.add('active');
+                    setTimeout(() => {
+                        document.getElementById(step).classList.remove('active');
+                    }, 400);
+                }, index * 300);
+            });
+        }
+
+        function resetFlow() {
+            const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+            steps.forEach(step => {
+                document.getElementById(step).classList.remove('active');
+            });
+        }
+
+        // Auto-run health check demo on load
+        window.addEventListener('load', () => {
+            setTimeout(() => runDemo('health'), 1000);
+        });
+    </script>
+</body>
+</html>

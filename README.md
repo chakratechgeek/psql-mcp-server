@@ -16,6 +16,38 @@ This MCP server integrates four major categories of system administration tools 
 3. **Git Version Control** (30 tools) - Full git repository operations
 4. **PostgreSQL Administration** (74+ tools) - Comprehensive database management
 
+## 🎬 Interactive Visual Demo
+
+Want to see how the MCP server works? We've created an **interactive HTML demonstration** that shows the server in action!
+
+### Features:
+- 🎮 **6 Interactive Demo Scenarios** - Click buttons to simulate different operations
+- 📊 **Live Animated Console** - See commands execute in real-time
+- 🔄 **Visual Flow Diagrams** - Watch data flow through the system
+- 📈 **Stats Dashboard** - View all server metrics at a glance
+- 🏗️ **Architecture Visualization** - See how components interact
+
+### How to Use the Demo:
+1. Open `demo/mcp-server-demo.html` in any web browser
+2. Click any demo button to see different operations:
+   - Check Database Health
+   - List Databases
+   - List Files
+   - Check Git Status
+   - Performance Check
+   - List Tables
+3. Watch the animated console and flow diagrams
+4. Interact with the demo as many times as you want!
+
+### What You'll Learn:
+- How MCP protocol bridges Claude AI and your PostgreSQL VM
+- The complete flow from user request to database response
+- How the security layer (ENABLE_DANGEROUS flag) works
+- Real examples of all 119 tools in action
+- Visual representation of the 4-layer architecture
+
+**No installation required** - The demo is a self-contained HTML file that works offline!
+
 ## Architecture
 
 ### System Architecture Diagram
@@ -710,6 +742,8 @@ pg_grant_privileges(
 psql-mcp-server/
 ├── main.py              # Main server implementation (all tools)
 ├── notes.txt           # Notes storage file
+├── demo/
+│   └── mcp-server-demo.html  # Interactive visual demo
 ├── .env                # Configuration (not in git)
 ├── README.md           # This file
 └── requirements.txt    # Python dependencies
@@ -738,9 +772,11 @@ For issues or questions:
 2. Review the `.env` configuration
 3. Ensure PostgreSQL is running and accessible
 4. Verify `ENABLE_DANGEROUS` flag for write operations
+5. Try the interactive demo to understand how the system works
 
 ---
 
 **Total Tools: 119**  
 **Server: FastMCP on port 8000**  
-**Categories: Notes (2) | Filesystem (13) | Git (30) | PostgreSQL (74+)**
+**Categories: Notes (2) | Filesystem (13) | Git (30) | PostgreSQL (74+)**  
+**Demo: See `demo/mcp-server-demo.html` for interactive visualization**
