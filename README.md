@@ -16,6 +16,209 @@ This MCP server integrates four major categories of system administration tools 
 3. **Git Version Control** (30 tools) - Full git repository operations
 4. **PostgreSQL Administration** (74+ tools) - Comprehensive database management
 
+## Architecture
+
+### System Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        AI[AI Assistant/Claude]
+    end
+    
+    subgraph "MCP Server - Port 8000"
+        Server[FastMCP Server<br/>LocalNotes+Postgres+FileSystem+Git]
+        
+        subgraph "Notes Tools - 2 tools"
+            N1[add_note]
+            N2[read_notes]
+        end
+        
+        subgraph "Filesystem Tools - 13 tools"
+            FS1[fs_read_file]
+            FS2[fs_write_file]
+            FS3[fs_list_directory]
+            FS4[fs_create_directory]
+            FS5[fs_delete_file/directory]
+            FS6[fs_move/copy]
+            FS7[fs_search_files]
+            FS8[fs_file_info]
+            FS9[fs_get_disk_usage]
+        end
+        
+        subgraph "Git Tools - 30 tools"
+            G1[Repository: init/clone/status]
+            G2[Basic: add/commit/push/pull]
+            G3[Branch: create/delete/checkout]
+            G4[History: log/diff/show]
+            G5[Remote: add/remove/list]
+            G6[Stash: save/pop/list]
+            G7[Tags: create/list]
+            G8[Config: get/set]
+        end
+        
+        subgraph "PostgreSQL Tools - 74+ tools"
+            PG1[Health & Monitoring]
+            PG2[Database Management]
+            PG3[Schema Management]
+            PG4[Table Operations]
+            PG5[Index Management]
+            PG6[User & Permissions]
+            PG7[Performance Analysis]
+            PG8[Query Execution]
+            PG9[Data Manipulation]
+            PG10[Maintenance]
+        end
+        
+        subgraph "Security Layer"
+            SEC[ENABLE_DANGEROUS Flag<br/>Controls write operations]
+        end
+        
+        subgraph "Connection Management"
+            POOL[Connection Pool<br/>Min: 1, Max: 5<br/>SSL Support]
+        end
+    end
+    
+    subgraph "External Systems"
+        subgraph "File Storage"
+            NOTES[notes.txt]
+            FILES[File System<br/>Directories & Files]
+        end
+        
+        subgraph "Version Control"
+            GITREPO[Git Repositories<br/>Local & Remote]
+        end
+        
+        subgraph "Database"
+            PGDB[(PostgreSQL Database)]
+            SCHEMA[Schemas & Tables]
+            INDEXES[Indexes]
+            USERS[Users & Roles]
+        end
+    end
+    
+    AI -->|MCP Protocol| Server
+    
+    Server --> N1 & N2
+    N1 & N2 -->|Read/Write| NOTES
+    
+    Server --> FS1 & FS2 & FS3 & FS4 & FS5 & FS6 & FS7 & FS8 & FS9
+    FS1 & FS2 & FS3 & FS4 & FS5 & FS6 & FS7 & FS8 & FS9 -->|File Operations| FILES
+    
+    Server --> G1 & G2 & G3 & G4 & G5 & G6 & G7 & G8
+    G1 & G2 & G3 & G4 & G5 & G6 & G7 & G8 -->|Git Commands| GITREPO
+    
+    Server --> PG1 & PG2 & PG3 & PG4 & PG5 & PG6 & PG7 & PG8 & PG9 & PG10
+    PG1 & PG2 & PG3 & PG4 & PG5 & PG6 & PG7 & PG8 & PG9 & PG10 -->|SQL Queries| POOL
+    POOL -->|Pooled Connections| PGDB
+    PGDB --> SCHEMA & INDEXES & USERS
+    
+    SEC -.->|Guards| PG2 & PG3 & PG4 & PG5 & PG6 & PG9 & PG10
+    
+    style AI fill:#9cf
+    style Server fill:#fc9
+    style SEC fill:#f99
+    style POOL fill:#9f9
+    style PGDB fill:#c9f
+    style GITREPO fill:#ff9
+    style FILES fill:#cfc
+    style NOTES fill:#cfc
+```
+
+### Data Flow Architecture
+
+```mermaid
+sequenceDiagram
+    participant Client as AI Client
+    participant MCP as FastMCP Server
+    participant Auth as Security Layer
+    participant FS as File System
+    participant Git as Git Repository
+    participant Pool as Connection Pool
+    participant PG as PostgreSQL
+
+    Note over Client,PG: Example: Database Query Workflow
+    Client->>MCP: pg_query(sql="SELECT * FROM users")
+    MCP->>Auth: Check ENABLE_DANGEROUS flag
+    Auth-->>MCP: Safe operation (read-only)
+    MCP->>Pool: Get connection from pool
+    Pool->>PG: Execute SELECT query
+    PG-->>Pool: Return results
+    Pool-->>MCP: Query results
+    MCP-->>Client: Return data
+
+    Note over Client,PG: Example: Write Operation Workflow
+    Client->>MCP: pg_create_table(...)
+    MCP->>Auth: Check ENABLE_DANGEROUS flag
+    alt ENABLE_DANGEROUS=false
+        Auth-->>MCP: Operation blocked
+        MCP-->>Client: Error: requires ENABLE_DANGEROUS
+    else ENABLE_DANGEROUS=true
+        Auth-->>MCP: Operation allowed
+        MCP->>Pool: Get connection from pool
+        Pool->>PG: Execute CREATE TABLE
+        PG-->>Pool: Success
+        Pool-->>MCP: Operation complete
+        MCP-->>Client: Success response
+    end
+
+    Note over Client,Git: Example: Git Workflow
+    Client->>MCP: git_status(repo_path)
+    MCP->>Git: Execute git status command
+    Git-->>MCP: Status output
+    MCP-->>Client: Return status
+
+    Note over Client,FS: Example: Filesystem Workflow
+    Client->>MCP: fs_read_file(path)
+    MCP->>FS: Read file contents
+    FS-->>MCP: File data
+    MCP-->>Client: Return contents
+```
+
+### Component Interaction Diagram
+
+```mermaid
+graph LR
+    subgraph "Tool Categories"
+        Notes[Notes Tools<br/>2 tools]
+        FS[Filesystem Tools<br/>13 tools]
+        Git[Git Tools<br/>30 tools]
+        PG[PostgreSQL Tools<br/>74+ tools]
+    end
+    
+    subgraph "Core Services"
+        FastMCP[FastMCP Framework]
+        Security[Security Layer]
+        Pool[Connection Pool]
+    end
+    
+    subgraph "External Resources"
+        NotesFile[notes.txt]
+        FileSystem[File System]
+        GitRepo[Git Repositories]
+        Database[(PostgreSQL)]
+    end
+    
+    Notes --> FastMCP
+    FS --> FastMCP
+    Git --> FastMCP
+    PG --> FastMCP
+    
+    FastMCP --> Security
+    Security --> Pool
+    
+    Notes --> NotesFile
+    FS --> FileSystem
+    Git --> GitRepo
+    PG --> Pool
+    Pool --> Database
+    
+    style FastMCP fill:#fc9
+    style Security fill:#f99
+    style Pool fill:#9f9
+    style Database fill:#c9f
+```
+
 ## Installation
 
 ### Prerequisites
@@ -450,37 +653,6 @@ All tools return error messages in a consistent format:
 "Error: descriptive error message"
 # or
 {"error": "descriptive error message"}
-```
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                     MCP Client (AI Assistant)            │
-└─────────────────────┬───────────────────────────────────┘
-                      │ MCP Protocol
-                      ▼
-┌─────────────────────────────────────────────────────────┐
-│              FastMCP Server (Port 8000)                  │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │    Notes     │  │  Filesystem  │  │     Git      │  │
-│  │   (2 tools)  │  │  (13 tools)  │  │  (30 tools)  │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-│                                                          │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │          PostgreSQL Administration                │  │
-│  │              (74+ tools)                          │  │
-│  └──────────────────────────────────────────────────┘  │
-│                                                          │
-└───────────┬──────────────────────────────┬──────────────┘
-            │                              │
-            ▼                              ▼
-    ┌───────────────┐            ┌─────────────────┐
-    │  File System  │            │   PostgreSQL    │
-    │   & Git Repo  │            │    Database     │
-    └───────────────┘            └─────────────────┘
 ```
 
 ## Troubleshooting
