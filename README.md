@@ -2,6 +2,94 @@
 
 A comprehensive Model Context Protocol (MCP) server that combines PostgreSQL database administration, filesystem management, git version control, and note-taking capabilities. Built with FastMCP on Python, this server provides AI assistants like Claude with powerful, secure system administration tools.
 
+---
+
+## 🎬 **LIVE INTERACTIVE DEMO**
+
+**[👉 CLICK HERE TO OPEN THE INTERACTIVE DEMO 👈](https://raw.githack.com/chakratechgeek/psql-mcp-server/main/demo/mcp-server-demo.html)**
+
+### Demo Features:
+<table>
+<tr>
+<td width="50%">
+
+#### 🎮 **Interactive Controls**
+- ✅ Click buttons to simulate operations
+- ✅ Watch live animated console
+- ✅ See data flow visualization
+- ✅ 6 different demo scenarios
+
+</td>
+<td width="50%">
+
+#### 📊 **What You'll See**
+- Database health checks
+- Listing databases & tables
+- File system operations
+- Git status commands
+- Performance monitoring
+- Real-time animations
+
+</td>
+</tr>
+</table>
+
+### How to Use the Demo:
+
+**Option 1: View Online (Recommended)**
+```
+Click the link above to open in your browser instantly!
+```
+
+**Option 2: Local File**
+```bash
+# Download and open locally
+git clone https://github.com/chakratechgeek/psql-mcp-server.git
+cd psql-mcp-server
+open demo/mcp-server-demo.html  # Mac
+start demo/mcp-server-demo.html  # Windows
+xdg-open demo/mcp-server-demo.html  # Linux
+```
+
+### Demo Preview:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│            🚀 PostgreSQL MCP Server Demo                    │
+│           Interactive Visual Demonstration                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  📊 Server Overview                                         │
+│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐                 │
+│  │ 119 │ │  74 │ │  30 │ │  13 │ │  2  │                 │
+│  │Tools│ │ PG  │ │ Git │ │ FS  │ │Note │                 │
+│  └─────┘ └─────┘ └─────┘ └─────┘ └─────┘                 │
+│                                                             │
+│  🏗️ System Architecture                                    │
+│  👤 You → 🤖 Claude → 🔌 MCP → 🖥️ VM                      │
+│                                                             │
+│  🎮 Interactive Demo Controls                              │
+│  [🏥 Health] [📚 DBs] [📁 Files] [🔧 Git]                 │
+│  [⚡ Performance] [📊 Tables] [🗑️ Clear]                   │
+│                                                             │
+│  💻 Live Console Output                                    │
+│  ┌───────────────────────────────────────────────┐        │
+│  │ $ User: "Check my database health"            │        │
+│  │ 🤖 Claude: Calling pg_health()...             │        │
+│  │ 🔌 Connecting to PostgreSQL...                │        │
+│  │ ✓ Connected successfully!                     │        │
+│  │ 📊 Server: PostgreSQL 16.10                   │        │
+│  │ ✅ Database is healthy!                        │        │
+│  └───────────────────────────────────────────────┘        │
+│                                                             │
+│  🔄 Command Flow Visualization                             │
+│  [Request] → [Parse] → [Execute] → [Process] → [Response] │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Overview
 
 **Server Name:** `LocalNotes+Postgres+FileSystem+Git`  
@@ -15,38 +103,6 @@ This MCP server integrates four major categories of system administration tools 
 2. **Filesystem Operations** (13 tools) - Complete file and directory management
 3. **Git Version Control** (30 tools) - Full git repository operations
 4. **PostgreSQL Administration** (74+ tools) - Comprehensive database management
-
-## 🎬 Interactive Visual Demo
-
-Want to see how the MCP server works? We've created an **interactive HTML demonstration** that shows the server in action!
-
-### Features:
-- 🎮 **6 Interactive Demo Scenarios** - Click buttons to simulate different operations
-- 📊 **Live Animated Console** - See commands execute in real-time
-- 🔄 **Visual Flow Diagrams** - Watch data flow through the system
-- 📈 **Stats Dashboard** - View all server metrics at a glance
-- 🏗️ **Architecture Visualization** - See how components interact
-
-### How to Use the Demo:
-1. Open `demo/mcp-server-demo.html` in any web browser
-2. Click any demo button to see different operations:
-   - Check Database Health
-   - List Databases
-   - List Files
-   - Check Git Status
-   - Performance Check
-   - List Tables
-3. Watch the animated console and flow diagrams
-4. Interact with the demo as many times as you want!
-
-### What You'll Learn:
-- How MCP protocol bridges Claude AI and your PostgreSQL VM
-- The complete flow from user request to database response
-- How the security layer (ENABLE_DANGEROUS flag) works
-- Real examples of all 119 tools in action
-- Visual representation of the 4-layer architecture
-
-**No installation required** - The demo is a self-contained HTML file that works offline!
 
 ## Architecture
 
@@ -772,11 +828,11 @@ For issues or questions:
 2. Review the `.env` configuration
 3. Ensure PostgreSQL is running and accessible
 4. Verify `ENABLE_DANGEROUS` flag for write operations
-5. Try the interactive demo to understand how the system works
+5. **[Try the interactive demo](https://raw.githack.com/chakratechgeek/psql-mcp-server/main/demo/mcp-server-demo.html)** to understand how the system works
 
 ---
 
 **Total Tools: 119**  
 **Server: FastMCP on port 8000**  
 **Categories: Notes (2) | Filesystem (13) | Git (30) | PostgreSQL (74+)**  
-**Demo: See `demo/mcp-server-demo.html` for interactive visualization**
+**🎬 [Interactive Demo Available!](https://raw.githack.com/chakratechgeek/psql-mcp-server/main/demo/mcp-server-demo.html)**
