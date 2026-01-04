@@ -1,0 +1,13 @@
+# Core dependencies
+fastmcp>=0.1.0
+psycopg[binary]>=3.0.0
+psycopg-pool>=3.0.0
+python-dotenv>=1.0.0
+
+# For OAuth authentication (only needed if using server_oauth.py)
+PyJWT>=2.8.0
+cryptography>=41.0.0
+httpx>=0.25.0
+
+# For API development
+uvicorn>=0.24.0
